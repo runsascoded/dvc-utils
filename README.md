@@ -47,14 +47,15 @@ dvc-utils diff --help
 ## Examples
 See sample commands and output below for inspecting changes to [a DVC-tracked Parquet file][commit path] in [a given commit][commit].
 
+Setup:
 ```bash
-git clone https://github.com/neighbor-ryan/nj-crashes
-commit=c8ae28e
-path=njdot/data/2001/NewJersey2001Accidents.pqt.dvc
+git clone https://github.com/neighbor-ryan/nj-crashes && cd nj-crashes # Clone + enter example repo
+commit=c8ae28e  # Example commit that changed some DVC-tracked Parquet files
+path=njdot/data/2001/NewJersey2001Accidents.pqt.dvc  # One of the changed files
 ```
 
 ### Parquet schema diff
-Use [`parquet2json`] to observe schema changes to a Parquet file, in [a given commit][commit] from [neighbor-ryan/nj-crashes]:
+Use [`parquet2json`] to observe schema changes to a Parquet file:
 ```bash
 parquet_schema() {
     parquet2json "$1" schema
@@ -110,10 +111,11 @@ Here we can see that various date/time columns were consolidated, and several st
 </details>
 
 ### Parquet row diff
-Diff the first row of the Parquet file above (pretty-printed as JSON), before and after the given commit:
+Diff the first row of the Parquet file above (pretty-printed as JSON using [`jq`]), before and after the given commit:
 
 ```bash
 pretty_print_first_row() {
+    # Print first row of Parquet file as JSON, pretty-print with jq
     parquet2json "$1" cat -l 1 | jq .
 }
 export -f pretty_print_first_row
@@ -188,3 +190,4 @@ This time we get no output; [the given `$commit`][commit] didn't change the row 
 [commit]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7
 [commit path]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7#diff-7f812dce61e0996354f4af414203e0933ccdfe9613cb406c40c1c41a14b9769c
 [neighbor-ryan/nj-crashes]: https://github.com/neighbor-ryan/nj-crashes
+[`jq`]: https://jqlang.github.io/jq/
