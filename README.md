@@ -45,14 +45,21 @@ dvc-utils diff --help
 ```
 
 ## Examples
-Use [`parquet2json`] to observe schema changes to a Parquet file, in a given commit from [neighbor-ryan/nj-crashes](https://github.com/neighbor-ryan/nj-crashes):
+See sample commands and output below for inspecting changes to [a DVC-tracked Parquet file][commit path] in [a given commit][commit].
+
+```bash
+git clone https://github.com/neighbor-ryan/nj-crashes
+commit=c8ae28e
+path=njdot/data/2001/NewJersey2001Accidents.pqt.dvc
+```
+
+### Parquet schema diff
+Use [`parquet2json`] to observe schema changes to a Parquet file, in [a given commit][commit] from [neighbor-ryan/nj-crashes]:
 ```bash
 parquet_schema() {
     parquet2json "$1" schema
 }
 export -f parquet_schema
-commit=7fa6a07
-path=njdot/data/2001/NewJersey2001Accidents.pqt.dvc
 dvc-utils diff -r $commit^..$commit parquet_schema $path
 ```
 <details><summary>Output</summary>
@@ -97,8 +104,12 @@ dvc-utils diff -r $commit^..$commit parquet_schema $path
 51a48
 >   OPTIONAL INT64 Date (TIMESTAMP(MICROS,false));
 ```
+
+Here we can see that various date/time columns were consolidated, and several stringly-typed columns were converted to ints, floats, and booleans.
+
 </details>
 
+### Parquet row diff
 Diff the first row of the Parquet file above (pretty-printed as JSON), before and after the given commit:
 
 ```bash
@@ -154,10 +165,26 @@ dvc-utils diff -r $commit^..$commit pretty_print_first_row $path
 >   "Reporting Badge No.": "830",
 >   "Date": "2001-12-21 18:34:00 +00:00"
 ```
+
+This reflects the schema changes above.
+
 </details>
 
+### Parquet row count diff
+```bash
+parquet_row_count() {
+    parquet2json "$1" rowcount
+}
+export -f parquet_row_count
+dvc-utils diff -r $commit^..$commit parquet_row_count $path
+```
 
+This time we get no output; [the given `$commit`][commit] didn't change the row count in the DVC-tracked Parquet file [`$path`][commit path].
 
 [DVC]: https://dvc.org/
 [`parquet2json`]: https://github.com/jupiter/parquet2json
+[neighbor-ryan/nj-crashes]: https://github.com/neighbor-ryan/nj-crashes
+[Parquet]: https://parquet.apache.org/
+[commit]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7
+[commit path]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7#diff-7f812dce61e0996354f4af414203e0933ccdfe9613cb406c40c1c41a14b9769c
 [neighbor-ryan/nj-crashes]: https://github.com/neighbor-ryan/nj-crashes
