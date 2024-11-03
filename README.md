@@ -1,12 +1,23 @@
 # dvc-utils
-CLI for diffing [DVC] files at two commits (or one commit vs. current worktree), optionally passing both through another command first
+CLI for diffing [DVC] files, optionally passing both through another command first
 
-## Installation
+<!-- toc -->
+- [Installation](#installation)
+- [Usage](#usage)
+    - [`dvc-utils diff`](#dvc-utils-diff)
+- [Examples](#examples)
+    - [Parquet file](#parquet-diff)
+        - [Schema diff](#parquet-schema-diff)
+        - [Row diff](#parquet-row-diff)
+        - [Row count diff](#parquet-row-count-diff)
+<!-- /toc -->
+
+## Installation <a id="installation"></a>
 ```bash
 pip install dvc-utils
 ```
 
-## Usage
+## Usage <a id="usage"></a>
 ```bash
 dvc-utils --help
 # Usage: dvc-utils [OPTIONS] COMMAND [ARGS]...
@@ -19,7 +30,7 @@ dvc-utils --help
 #         worktree), optionally passing both through another command first
 ```
 
-### `dvc-utils diff`
+### `dvc-utils diff` <a id="dvc-utils-diff"></a>
 ```bash
 dvc-utils diff --help
 # Usage: dvc-utils diff [OPTIONS] [cmd...] <path>
@@ -44,17 +55,19 @@ dvc-utils diff --help
 #   --help              Show this message and exit.
 ```
 
-## Examples
+## Examples <a id="examples"></a>
+
+### Parquet file <a id="parquet-diff"></a>
 See sample commands and output below for inspecting changes to [a DVC-tracked Parquet file][commit path] in [a given commit][commit].
 
 Setup:
 ```bash
-git clone https://github.com/neighbor-ryan/nj-crashes && cd nj-crashes # Clone + enter example repo
+git clone https://github.com/hudcostreets/nj-crashes && cd nj-crashes # Clone + enter example repo
 commit=c8ae28e  # Example commit that changed some DVC-tracked Parquet files
 path=njdot/data/2001/NewJersey2001Accidents.pqt.dvc  # One of the changed files
 ```
 
-### Parquet schema diff
+#### Schema diff <a id="parquet-schema-diff"></a>
 Use [`parquet2json`] to observe schema changes to a Parquet file:
 ```bash
 parquet_schema() {
@@ -110,7 +123,7 @@ Here we can see that various date/time columns were consolidated, and several st
 
 </details>
 
-### Parquet row diff
+#### Row diff <a id="parquet-row-diff"></a>
 Diff the first row of the Parquet file above (pretty-printed as JSON using [`jq`]), before and after the given commit:
 
 ```bash
@@ -172,7 +185,7 @@ This reflects the schema changes above.
 
 </details>
 
-### Parquet row count diff
+#### Row count diff <a id="parquet-row-count-diff"></a>
 ```bash
 parquet_row_count() {
     parquet2json "$1" rowcount
@@ -185,9 +198,9 @@ This time we get no output; [the given `$commit`][commit] didn't change the row 
 
 [DVC]: https://dvc.org/
 [`parquet2json`]: https://github.com/jupiter/parquet2json
-[neighbor-ryan/nj-crashes]: https://github.com/neighbor-ryan/nj-crashes
+[hudcostreets/nj-crashes]: https://github.com/hudcostreets/nj-crashes
 [Parquet]: https://parquet.apache.org/
-[commit]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7
-[commit path]: https://github.com/neighbor-ryan/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7#diff-7f812dce61e0996354f4af414203e0933ccdfe9613cb406c40c1c41a14b9769c
-[neighbor-ryan/nj-crashes]: https://github.com/neighbor-ryan/nj-crashes
+[commit]: https://github.com/hudcostreets/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7
+[commit path]: https://github.com/hudcostreets/nj-crashes/commit/c8ae28e64f4917895d84074913f48e0a7afbc3d7#diff-7f812dce61e0996354f4af414203e0933ccdfe9613cb406c40c1c41a14b9769c
+[hudcostreets/nj-crashes]: https://github.com/hudcostreets/nj-crashes
 [`jq`]: https://jqlang.github.io/jq/
