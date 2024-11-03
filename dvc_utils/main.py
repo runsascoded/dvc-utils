@@ -1,5 +1,12 @@
+from functools import cache
+from os import environ as env, getcwd
+
+from typing import Optional, Tuple
+
 import shlex
-from os.path import join
+from os.path import join, relpath
+
+from click import option, argument, group
 from subprocess import Popen
 
 import click
@@ -9,12 +16,12 @@ from utz import process, singleton, err
 from dvc_utils.named_pipes import named_pipes
 
 
-@click.group()
+@group()
 def cli():
     pass
 
 
-def dvc_paths(path):
+def dvc_paths(path: str) -> Tuple[str, str]:
     if path.endswith('.dvc'):
         dvc_path = path
         path = dvc_path[:-len('.dvc')]
@@ -23,54 +30,70 @@ def dvc_paths(path):
     return path, dvc_path
 
 
-def dvc_md5(git_ref, dvc_path, log=False):
-    dvc_spec = process.output('git', 'show', f'{git_ref}:{dvc_path}', log=log)
+@cache
+def get_git_root() -> str:
+    return process.line('git', 'rev-parse', '--show-toplevel', log=False)
+
+
+@cache
+def get_dir_path() -> str:
+    return relpath(getcwd(), get_git_root())
+
+
+@cache
+def dvc_cache_dir(log: bool = False) -> str:
+    dvc_cache_relpath = env.get('DVC_UTILS_CACHE_DIR')
+    if dvc_cache_relpath:
+        return join(get_git_root(), dvc_cache_relpath)
+    else:
+        return process.line('dvc', 'cache', 'dir', log=log)
+
+
+def dvc_md5(git_ref: str, dvc_path: str, log: bool = False) -> str:
+    dir_path = get_dir_path()
+    dir_path = '' if dir_path == '.' else f'{dir_path}/'
+    dvc_spec = process.output('git', 'show', f'{git_ref}:{dir_path}{dvc_path}', log=log)
     dvc_obj = yaml.safe_load(dvc_spec)
     out = singleton(dvc_obj['outs'], dedupe=False)
     md5 = out['md5']
     return md5
 
 
-_dvc_cache_dir = None
-def dvc_cache_dir(log=False):
-    global _dvc_cache_dir
-    if _dvc_cache_dir is None:
-        _dvc_cache_dir = process.line('dvc', 'cache', 'dir', log=log)
-    return _dvc_cache_dir
-
-
-def dvc_cache_path(spec, dvc_path=None, log=False):
+def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) -> str:
     if dvc_path:
-        md5 = dvc_md5(spec, dvc_path, log=log)
-    elif ':' in spec:
-        git_ref, dvc_path = spec.split(':', 1)
+        md5 = dvc_md5(ref, dvc_path, log=log)
+    elif ':' in ref:
+        git_ref, dvc_path = ref.split(':', 1)
         md5 = dvc_md5(git_ref, dvc_path, log=log)
     else:
-        md5 = spec
+        md5 = ref
     dirname = md5[:2]
     basename = md5[2:]
     return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
 
 
-def diff_cmds(cmd1, cmd2, **kwargs):
+def diff_cmds(cmd1: str, cmd2: str, verbose: bool = False, **kwargs):
     """Run two commands and diff their output.
 
     Adapted from https://stackoverflow.com/a/28840955"""
-    with named_pipes(n=2) as paths:
-        someprogram = Popen(['diff'] + paths)
+    with named_pipes(n=2) as pipes:
+        (pipe1, pipe2) = pipes
+        diff = Popen(['diff'] + pipes)
         processes = []
-        for path, cmd in zip(paths, [ cmd1, cmd2 ]):
+        for path, cmd in ((pipe1, cmd1), (pipe2, cmd2)):
             with open(path, 'wb', 0) as pipe:
+                if verbose:
+                    err(f"Running: {cmd}")
                 processes.append(Popen(cmd, stdout=pipe, close_fds=True, **kwargs))
-        for p in [someprogram] + processes:
+        for p in [diff] + processes:
             p.wait()
 
 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
-@click.option('-r', '--refspec', default='HEAD', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
-@click.option('-S', '--no-shell', is_flag=True, help="Don't pass `shell=True` to Python `subprocess`es")
-@click.option('-v', '--verbose', is_flag=True, help="Log intermediate commands to stderr")
-@click.argument('args', metavar='[cmd...] <path>', nargs=-1)
+@option('-r', '--refspec', default='HEAD', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
+@option('-S', '--no-shell', is_flag=True, help="Don't pass `shell=True` to Python `subprocess`es")
+@option('-v', '--verbose', is_flag=True, help="Log intermediate commands to stderr")
+@argument('args', metavar='[cmd...] <path>', nargs=-1)
 def dvc_utils_diff(refspec, no_shell, verbose, args):
     """Diff a file at two commits (or one commit vs. current worktree), optionally passing both through `cmd` first
 
@@ -84,33 +107,39 @@ def dvc_utils_diff(refspec, no_shell, verbose, args):
         raise click.UsageError('Must specify [cmd...] <path>')
 
     shell = not no_shell
-    (*cmd, path) = args
-    if path.endswith('.dvc'):
-        dvc_path = path
-        path = dvc_path[:-len('.dvc')]
+    if len(args) == 2:
+        cmd, path = args
+        cmd = shlex.split(cmd)
+    elif len(args) == 1:
+        cmd = None
+        path, = args
     else:
-        dvc_path = f'{path}.dvc'
+        raise click.UsageError('Maximum 2 positional args: [cmd] <path>')
+
+    path, dvc_path = dvc_paths(path)
 
     pcs = refspec.split('..', 1)
     if len(pcs) == 1:
         before = pcs[0]
         after = None
-    else:
+    elif len(pcs) == 2:
         before, after = pcs
+    else:
+        raise ValueError(f"Invalid refspec: {refspec}")
 
     log = err if verbose else False
     before_path = dvc_cache_path(before, dvc_path, log=log)
     after_path = path if after is None else dvc_cache_path(after, dvc_path, log=log)
 
     if cmd:
-        def args(path):
+        def args(path: str):
             arr = cmd + [path]
             return shlex.join(arr) if shell else arr
 
         shell_kwargs = dict(shell=shell) if shell else {}
         before_cmd = args(before_path)
         after_cmd = args(after_path)
-        diff_cmds(before_cmd, after_cmd, **shell_kwargs)
+        diff_cmds(before_cmd, after_cmd, verbose=verbose, **shell_kwargs)
     else:
         process.run('diff', before_path, after_path, log=log)
 
