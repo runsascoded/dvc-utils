@@ -72,13 +72,29 @@ def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) 
     return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
 
 
-def diff_cmds(cmd1: str, cmd2: str, verbose: bool = False, **kwargs):
+def diff_cmds(
+    cmd1: str,
+    cmd2: str,
+    verbose: bool = False,
+    color: bool = False,
+    unified: int | None = None,
+    ignore_whitespace: bool = False,
+    **kwargs,
+):
     """Run two commands and diff their output.
 
     Adapted from https://stackoverflow.com/a/28840955"""
     with named_pipes(n=2) as pipes:
         (pipe1, pipe2) = pipes
-        diff = Popen(['diff'] + pipes)
+        diff_cmd = [
+            'diff',
+            *(['-w'] if ignore_whitespace else []),
+            *(['-U', str(unified)] if unified is not None else []),
+            *(['--color=always'] if color else []),
+            pipe1,
+            pipe2,
+        ]
+        diff = Popen(diff_cmd)
         processes = []
         for path, cmd in ((pipe1, cmd1), (pipe2, cmd2)):
             with open(path, 'wb', 0) as pipe:
@@ -90,11 +106,22 @@ def diff_cmds(cmd1: str, cmd2: str, verbose: bool = False, **kwargs):
 
 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
+@option('-c', '--color', is_flag=True, help='Colorize the output')
 @option('-r', '--refspec', default='HEAD', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
 @option('-S', '--no-shell', is_flag=True, help="Don't pass `shell=True` to Python `subprocess`es")
+@option('-U', '--unified', type=int, help='Number of lines of context to show (passes through to `diff`)')
 @option('-v', '--verbose', is_flag=True, help="Log intermediate commands to stderr")
+@option('-w', '--ignore-whitespace', is_flag=True, help="Ignore whitespace differences (pass `-w` to `diff`)")
 @argument('args', metavar='[cmd...] <path>', nargs=-1)
-def dvc_utils_diff(refspec, no_shell, verbose, args):
+def dvc_utils_diff(
+    color: bool,
+    refspec: str | None,
+    no_shell: bool,
+    unified: int | None,
+    verbose: bool,
+    ignore_whitespace: bool,
+    args: Tuple[str, ...],
+):
     """Diff a file at two commits (or one commit vs. current worktree), optionally passing both through `cmd` first
 
     Examples:
@@ -139,7 +166,15 @@ def dvc_utils_diff(refspec, no_shell, verbose, args):
         shell_kwargs = dict(shell=shell) if shell else {}
         before_cmd = args(before_path)
         after_cmd = args(after_path)
-        diff_cmds(before_cmd, after_cmd, verbose=verbose, **shell_kwargs)
+        diff_cmds(
+            before_cmd,
+            after_cmd,
+            verbose=verbose,
+            color=color,
+            unified=unified,
+            ignore_whitespace=ignore_whitespace,
+            **shell_kwargs,
+        )
     else:
         process.run('diff', before_path, after_path, log=log)
 

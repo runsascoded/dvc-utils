@@ -18,6 +18,7 @@ pip install dvc-utils
 ```
 
 ## Usage <a id="usage"></a>
+<!-- `bmdf -- dvc-utils --help` -->
 ```bash
 dvc-utils --help
 # Usage: dvc-utils [OPTIONS] COMMAND [ARGS]...
@@ -31,6 +32,7 @@ dvc-utils --help
 ```
 
 ### `dvc-utils diff` <a id="dvc-utils-diff"></a>
+<!-- `bmdf -- dvc-utils diff --help` -->
 ```bash
 dvc-utils diff --help
 # Usage: dvc-utils diff [OPTIONS] [cmd...] <path>
@@ -48,11 +50,15 @@ dvc-utils diff --help
 #   optional) at HEAD (last committed value) vs. the current worktree content.
 #
 # Options:
-#   -r, --refspec TEXT  <commit 1>..<commit 2> (compare two commits) or <commit>
-#                       (compare <commit> to the worktree)
-#   -S, --no-shell      Don't pass `shell=True` to Python `subprocess`es
-#   -v, --verbose       Log intermediate commands to stderr
-#   --help              Show this message and exit.
+#   -c, --color              Colorize the output
+#   -r, --refspec TEXT       <commit 1>..<commit 2> (compare two commits) or
+#                            <commit> (compare <commit> to the worktree)
+#   -S, --no-shell           Don't pass `shell=True` to Python `subprocess`es
+#   -U, --unified INTEGER    Number of lines of context to show (passes through
+#                            to `diff`)
+#   -v, --verbose            Log intermediate commands to stderr
+#   -w, --ignore-whitespace  Ignore whitespace differences (pass `-w` to `diff`)
+#   --help                   Show this message and exit.
 ```
 
 ## Examples <a id="examples"></a>
