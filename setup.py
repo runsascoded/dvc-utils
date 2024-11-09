@@ -10,6 +10,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dvc-utils = dvc_utils.main:cli',
+            'dvc-diff = dvc_utils.main:dvc_utils_diff',
         ],
     },
     license="MIT",

@@ -31,11 +31,11 @@ dvc-utils --help
 #         worktree), optionally passing both through another command first
 ```
 
-### `dvc-utils diff` <a id="dvc-utils-diff"></a>
-<!-- `bmdf -- dvc-utils diff --help` -->
+### `dvc-diff` <a id="dvc-diff"></a>
+<!-- `bmdf -- dvc-diff --help` -->
 ```bash
-dvc-utils diff --help
-# Usage: dvc-utils diff [OPTIONS] [cmd...] <path>
+dvc-diff --help
+# Usage: dvc-diff [OPTIONS] [cmd...] <path>
 #
 #   Diff a file at two commits (or one commit vs. current worktree), optionally
 #   passing both through `cmd` first
