@@ -4,7 +4,7 @@ CLI for diffing [DVC] files, optionally passing both through another command fir
 <!-- toc -->
 - [Installation](#installation)
 - [Usage](#usage)
-    - [`dvc-utils diff`](#dvc-utils-diff)
+    - [`dvc-diff`](#dvc-diff)
 - [Examples](#examples)
     - [Parquet file](#parquet-diff)
         - [Schema diff](#parquet-schema-diff)
@@ -31,11 +31,13 @@ dvc-utils --help
 #         worktree), optionally passing both through another command first
 ```
 
+The single subcommand, `dvc-utils diff`, is also exposed directly as `dvc-dff`:
+
 ### `dvc-diff` <a id="dvc-diff"></a>
 <!-- `bmdf -- dvc-diff --help` -->
 ```bash
 dvc-diff --help
-# Usage: dvc-diff [OPTIONS] [cmd...] <path>
+# Usage: dvc-diff [OPTIONS] [exec_cmd...] <path>
 #
 #   Diff a file at two commits (or one commit vs. current worktree), optionally
 #   passing both through `cmd` first
@@ -58,6 +60,8 @@ dvc-diff --help
 #                            to `diff`)
 #   -v, --verbose            Log intermediate commands to stderr
 #   -w, --ignore-whitespace  Ignore whitespace differences (pass `-w` to `diff`)
+#   -x, --exec-cmd TEXT      Command(s) to execute before diffing; alternate
+#                            syntax to passing commands as positional arguments
 #   --help                   Show this message and exit.
 ```
 
@@ -80,7 +84,7 @@ parquet_schema() {
     parquet2json "$1" schema
 }
 export -f parquet_schema
-dvc-utils diff -r $commit^..$commit parquet_schema $path
+dvc-diff -r $commit^..$commit parquet_schema $path
 ```
 <details><summary>Output</summary>
 
@@ -138,7 +142,7 @@ pretty_print_first_row() {
     parquet2json "$1" cat -l 1 | jq .
 }
 export -f pretty_print_first_row
-dvc-utils diff -r $commit^..$commit pretty_print_first_row $path
+dvc-diff -r $commit^..$commit pretty_print_first_row $path
 ```
 
 <details><summary>Output</summary>
@@ -197,7 +201,7 @@ parquet_row_count() {
     parquet2json "$1" rowcount
 }
 export -f parquet_row_count
-dvc-utils diff -r $commit^..$commit parquet_row_count $path
+dvc-diff -r $commit^..$commit parquet_row_count $path
 ```
 
 This time we get no output; [the given `$commit`][commit] didn't change the row count in the DVC-tracked Parquet file [`$path`][commit path].
