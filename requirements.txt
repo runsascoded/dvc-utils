@@ -1,3 +1,3 @@
 click
 pyyaml
-utz
+utz>=0.11.0

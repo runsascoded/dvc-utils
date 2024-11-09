@@ -2,15 +2,12 @@ from functools import cache
 from os import environ as env, getcwd
 from os.path import join, relpath
 import shlex
-from subprocess import Popen, PIPE
 from typing import Optional, Tuple
 
 from click import option, argument, group
 import click
 import yaml
-from utz import process, singleton, err
-
-from dvc_utils.named_pipes import named_pipes
+from utz import diff_cmds, process, err, singleton
 
 
 @group()
@@ -67,86 +64,6 @@ def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) 
     dirname = md5[:2]
     basename = md5[2:]
     return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
-
-
-def diff_cmds(
-    cmds1: list[str],
-    cmds2: list[str],
-    verbose: bool = False,
-    color: bool = False,
-    unified: int | None = None,
-    ignore_whitespace: bool = False,
-    **kwargs,
-):
-    """Run two sequences of piped commands and diff their output.
-
-    Args:
-        cmds1: First sequence of commands to pipe together
-        cmds2: Second sequence of commands to pipe together
-        verbose: Whether to print commands being executed
-        color: Whether to show colored diff output
-        unified: Number of unified context lines, or None
-        ignore_whitespace: Whether to ignore whitespace changes
-        **kwargs: Additional arguments passed to subprocess.Popen
-
-    Each command sequence will be piped together before being compared.
-    For example, if cmds1 = ['cat foo.txt', 'sort'], the function will
-    execute 'cat foo.txt | sort' before comparing with cmds2's output.
-
-    Adapted from https://stackoverflow.com/a/28840955"""
-    with named_pipes(n=2) as pipes:
-        (pipe1, pipe2) = pipes
-        diff_cmd = [
-            'diff',
-            *(['-w'] if ignore_whitespace else []),
-            *(['-U', str(unified)] if unified is not None else []),
-            *(['--color=always'] if color else []),
-            pipe1,
-            pipe2,
-        ]
-        diff = Popen(diff_cmd)
-        processes = []
-
-        for pipe, cmds in ((pipe1, cmds1), (pipe2, cmds2)):
-            if verbose:
-                err(f"Running pipeline: {' | '.join(cmds)}")
-
-            # Create the pipeline of processes
-            prev_process = None
-            for i, cmd in enumerate(cmds):
-                is_last = i + 1 == len(cmds)
-
-                # For the first process, take input from the original source
-                stdin = None if prev_process is None else prev_process.stdout
-
-                # For the last process, output to the named pipe
-                if is_last:
-                    with open(pipe, 'wb', 0) as pipe_fd:
-                        proc = Popen(
-                            cmd,
-                            stdin=stdin,
-                            stdout=pipe_fd,
-                            close_fds=True,
-                            **kwargs
-                        )
-                # For intermediate processes, output to a pipe
-                else:
-                    proc = Popen(
-                        cmd,
-                        stdin=stdin,
-                        stdout=PIPE,
-                        close_fds=True,
-                        **kwargs
-                    )
-
-                if prev_process is not None:
-                    prev_process.stdout.close()
-
-                processes.append(proc)
-                prev_process = proc
-
-        for p in [diff] + processes:
-            p.wait()
 
 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
