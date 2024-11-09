@@ -52,17 +52,22 @@ dvc-diff --help
 #   optional) at HEAD (last committed value) vs. the current worktree content.
 #
 # Options:
-#   -c, --color              Colorize the output
-#   -r, --refspec TEXT       <commit 1>..<commit 2> (compare two commits) or
-#                            <commit> (compare <commit> to the worktree)
-#   -S, --no-shell           Don't pass `shell=True` to Python `subprocess`es
-#   -U, --unified INTEGER    Number of lines of context to show (passes through
-#                            to `diff`)
-#   -v, --verbose            Log intermediate commands to stderr
-#   -w, --ignore-whitespace  Ignore whitespace differences (pass `-w` to `diff`)
-#   -x, --exec-cmd TEXT      Command(s) to execute before diffing; alternate
-#                            syntax to passing commands as positional arguments
-#   --help                   Show this message and exit.
+#   -c, --color                  Colorize the output
+#   -r, --refspec TEXT           <commit 1>..<commit 2> (compare two commits) or
+#                                <commit> (compare <commit> to the worktree)
+#   -s, --shell-executable TEXT  Shell to use for executing commands; defaults
+#                                to $SHELL (/bin/bash)
+#   -S, --no-shell               Don't pass `shell=True` to Python
+#                                `subprocess`es
+#   -U, --unified INTEGER        Number of lines of context to show (passes
+#                                through to `diff`)
+#   -v, --verbose                Log intermediate commands to stderr
+#   -w, --ignore-whitespace      Ignore whitespace differences (pass `-w` to
+#                                `diff`)
+#   -x, --exec-cmd TEXT          Command(s) to execute before diffing; alternate
+#                                syntax to passing commands as positional
+#                                arguments
+#   --help                       Show this message and exit.
 ```
 
 ## Examples <a id="examples"></a>

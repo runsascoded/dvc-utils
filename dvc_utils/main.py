@@ -69,6 +69,7 @@ def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
 @option('-c', '--color', is_flag=True, help='Colorize the output')
 @option('-r', '--refspec', default='HEAD', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
+@option('-s', '--shell-executable', help=f'Shell to use for executing commands; defaults to $SHELL ({env.get("SHELL")})')
 @option('-S', '--no-shell', is_flag=True, help="Don't pass `shell=True` to Python `subprocess`es")
 @option('-U', '--unified', type=int, help='Number of lines of context to show (passes through to `diff`)')
 @option('-v', '--verbose', is_flag=True, help="Log intermediate commands to stderr")
@@ -78,6 +79,7 @@ def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) 
 def dvc_utils_diff(
     color: bool,
     refspec: str | None,
+    shell_executable: str | None,
     no_shell: bool,
     unified: int | None,
     verbose: bool,
@@ -140,6 +142,7 @@ def dvc_utils_diff(
             color=color,
             unified=unified,
             ignore_whitespace=ignore_whitespace,
+            shell_executable=shell_executable,
             **shell_kwargs,
         )
     else:
