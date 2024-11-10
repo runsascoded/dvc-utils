@@ -9,8 +9,8 @@ setup(
     packages=['dvc_utils'],
     entry_points={
         'console_scripts': [
-            'dvc-utils = dvc_utils.main:cli',
-            'dvc-diff = dvc_utils.main:dvc_utils_diff',
+            'dvc-utils = dvc_utils.cli:cli',
+            'dvc-diff = dvc_utils.cli:dvc_utils_diff',
         ],
     },
     license="MIT",

@@ -1,69 +1,17 @@
-from functools import cache
-from os import environ as env, getcwd
-from os.path import join, relpath
 import shlex
-from typing import Optional, Tuple
+from os import environ as env
+from typing import Tuple
 
-from click import option, argument, group
 import click
-import yaml
-from utz import diff_cmds, process, err, singleton
+from click import option, argument, group
+from utz import diff_cmds, process, err
+
+from dvc_utils.path import dvc_paths, dvc_path as dvc_cache_path
 
 
 @group()
 def cli():
     pass
-
-
-def dvc_paths(path: str) -> Tuple[str, str]:
-    if path.endswith('.dvc'):
-        dvc_path = path
-        path = dvc_path[:-len('.dvc')]
-    else:
-        dvc_path = f'{path}.dvc'
-    return path, dvc_path
-
-
-@cache
-def get_git_root() -> str:
-    return process.line('git', 'rev-parse', '--show-toplevel', log=False)
-
-
-@cache
-def get_dir_path() -> str:
-    return relpath(getcwd(), get_git_root())
-
-
-@cache
-def dvc_cache_dir(log: bool = False) -> str:
-    dvc_cache_relpath = env.get('DVC_UTILS_CACHE_DIR')
-    if dvc_cache_relpath:
-        return join(get_git_root(), dvc_cache_relpath)
-    else:
-        return process.line('dvc', 'cache', 'dir', log=log)
-
-
-def dvc_md5(git_ref: str, dvc_path: str, log: bool = False) -> str:
-    dir_path = get_dir_path()
-    dir_path = '' if dir_path == '.' else f'{dir_path}/'
-    dvc_spec = process.output('git', 'show', f'{git_ref}:{dir_path}{dvc_path}', log=err if log else None)
-    dvc_obj = yaml.safe_load(dvc_spec)
-    out = singleton(dvc_obj['outs'], dedupe=False)
-    md5 = out['md5']
-    return md5
-
-
-def dvc_cache_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) -> str:
-    if dvc_path:
-        md5 = dvc_md5(ref, dvc_path, log=log)
-    elif ':' in ref:
-        git_ref, dvc_path = ref.split(':', 1)
-        md5 = dvc_md5(git_ref, dvc_path, log=log)
-    else:
-        md5 = ref
-    dirname = md5[:2]
-    basename = md5[2:]
-    return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
 
 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
