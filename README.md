@@ -1,6 +1,8 @@
 # dvc-utils
 Diff [DVC] files, optionally piping through other commands first.
 
+[![dvc-utils on PyPI](https://img.shields.io/pypi/v/dvc-utils?label=dvc-utils)][PyPI]
+
 <!-- toc -->
 - [Installation](#installation)
 - [Usage](#usage)
@@ -300,6 +302,7 @@ s3/ctbk/csvs/202003-citibike-tripdata.csv.gz.dvc:
 This helped me see that the data update in question (`c0..c1`) dropped some fields (`bikeid, birth_year`, `gender`, `tripduration`) and added others (`ride_id`, `rideable_type`), for `202001` and later.
 
 [DVC]: https://dvc.org/
+[PyPI]: https://pypi.org/project/dvc-utils/
 [`parquet2json`]: https://github.com/jupiter/parquet2json
 [hudcostreets/nj-crashes]: https://github.com/hudcostreets/nj-crashes
 [Parquet]: https://parquet.apache.org/
