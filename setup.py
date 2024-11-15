@@ -7,6 +7,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     packages=['dvc_utils'],
+    install_requires=open("requirements.txt").read(),
     entry_points={
         'console_scripts': [
             'dvc-utils = dvc_utils.cli:cli',
