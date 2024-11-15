@@ -4,7 +4,8 @@ from typing import Tuple
 
 import click
 from click import option, argument, group
-from utz import diff_cmds, process, err
+from utz import process, err
+from qmdx import join_pipelines
 
 from dvc_utils.path import dvc_paths, dvc_path as dvc_cache_path
 
@@ -62,39 +63,32 @@ def dvc_utils_diff(
         raise ValueError(f"Invalid refspec: {refspec}")
 
     log = err if verbose else False
-    before_path = dvc_cache_path(before, dvc_path, log=log)
-    after_path = path if after is None else dvc_cache_path(after, dvc_path, log=log)
+    path1 = dvc_cache_path(before, dvc_path, log=log)
+    path2 = path if after is None else dvc_cache_path(after, dvc_path, log=log)
 
+    diff_args = [
+        *(['-w'] if ignore_whitespace else []),
+        *(['-U', str(unified)] if unified is not None else []),
+        *(['--color=always'] if color else []),
+    ]
     if cmds:
         cmd, *sub_cmds = cmds
+        cmds1 = [ f'{cmd} {path1}', *sub_cmds ]
+        cmds2 = [ f'{cmd} {path2}', *sub_cmds ]
         if not shell:
-            sub_cmds = [ shlex.split(c) for c in sub_cmds ]
-            before_cmds = [
-                shlex.split(f'{cmd} {before_path}'),
-                *sub_cmds,
-            ]
-            after_cmds = [
-                shlex.split(f'{cmd} {after_path}'),
-                *sub_cmds,
-            ]
-            shell_kwargs = {}
-        else:
-            before_cmds = [ f'{cmd} {before_path}', *sub_cmds ]
-            after_cmds = [ f'{cmd} {after_path}', *sub_cmds ]
-            shell_kwargs = dict(shell=shell)
+            cmds1 = [ shlex.split(cmd) for cmd in cmds1 ]
+            cmds2 = [ shlex.split(cmd) for cmd in cmds2 ]
 
-        diff_cmds(
-            before_cmds,
-            after_cmds,
+        join_pipelines(
+            base_cmd=['diff', *diff_args],
+            cmds1=cmds1,
+            cmds2=cmds2,
             verbose=verbose,
-            color=color,
-            unified=unified,
-            ignore_whitespace=ignore_whitespace,
+            shell=shell,
             shell_executable=shell_executable,
-            **shell_kwargs,
         )
     else:
-        process.run('diff', before_path, after_path, log=log)
+        process.run('diff', *diff_args, path1, path2, log=log)
 
 
 if __name__ == '__main__':
