@@ -237,7 +237,7 @@ pel "ddcr $r guc h1 spc kq kcr snc 'sdf seds' sort"
 
 <details>
 <summary>
-Aliases used in the pipeline:
+Explanation of aliases
 </summary>
 
 - [`gdno`] (`git diff --name-only`): list files changed in the given commit range and directory
@@ -245,9 +245,9 @@ Aliases used in the pipeline:
 - [`ddcr`] (`dvc-diff -cr`): colorized `diff` output, revision range `$r`
 - [`guc`] (`gunzip -c`): uncompress the `.csv.gz` files
 - [`h1`] (`head -n1`): only examine each file's header line
-- [`spc`] (`tr , $'\n'`): split the header line by commas (so each column name will be on one line, for easier `diff`ing below)
-- [`kq`] (`tr -d '"'`): kill quote characters (in this case, header-column name quoting changed, but I don't care about that)
-- [`kcr`] (`tr -d '\r'`): kill carriage returns (line endings also changed)
+- [`spc`] (`tr , $'\n'`): **sp**lit the header line by **c**ommas (so each column name will be on one line, for easier `diff`ing below)
+- [`kq`] (`tr -d '"'`): **k**ill **q**uote characters (in this case, header-column name quoting changed, but I don't care about that)
+- [`kcr`] (`tr -d '\r'`): **k**ill **c**arriage **r**eturns (line endings also changed)
 - [`snc`] (`sed -f 'snake_case.sed'`): snake-case column names
 - [`sdf`] (`sed -f`): execute the `sed` substitution commands defined in the `seds` file above
 - `sort`: sort the column names alphabetically (to identify missing or added columns, ignore rearrangements)
