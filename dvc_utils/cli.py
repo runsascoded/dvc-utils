@@ -1,13 +1,15 @@
+import json
 import shlex
-from os import environ as env
+from os import environ as env, listdir
+from os.path import isdir, join
 from typing import Tuple
 
 import click
 from click import option, argument, group
-from utz import process, err
 from qmdx import join_pipelines
+from utz import process, err, hash_file
 
-from dvc_utils.path import dvc_paths, dvc_path as dvc_cache_path
+from dvc_utils.path import dvc_paths, dvc_cache_path
 
 
 @group()
@@ -72,33 +74,54 @@ def dvc_utils_diff(
         raise ValueError(f"Invalid refspec: {refspec}")
 
     log = err if verbose else False
-    path1 = dvc_cache_path(before, dvc_path, log=log) or '/dev/null'
-    path2 = (path if after is None else dvc_cache_path(after, dvc_path, log=log)) or '/dev/null'
+    path1 = dvc_cache_path(before, dvc_path, log=log)
+    path2 = (path if after is None else dvc_cache_path(after, dvc_path, log=log))
 
-    diff_args = [
-        *(['-w'] if ignore_whitespace else []),
-        *(['-U', str(unified)] if unified is not None else []),
-        *(['--color=always'] if color else []),
-    ]
-    if cmds:
-        cmd, *sub_cmds = cmds
-        cmds1 = [ f'{cmd} {path1}', *sub_cmds ]
-        cmds2 = [ f'{cmd} {path2}', *sub_cmds ]
-        if not shell:
-            cmds1 = [ shlex.split(cmd) for cmd in cmds1 ]
-            cmds2 = [ shlex.split(cmd) for cmd in cmds2 ]
-
-        join_pipelines(
-            base_cmd=['diff', *diff_args],
-            cmds1=cmds1,
-            cmds2=cmds2,
-            verbose=verbose,
-            shell=shell,
-            shell_executable=shell_executable,
-        )
+    if isdir(path):
+        dir_json1 = dir_json2 = {}
+        if path1:
+            with open(path1, 'r') as f:
+                obj = json.load(f)
+                dir_json1 = { e["relpath"]: e["md5"] for e in obj }
+        if path2:
+            if path2 == path and after is None:
+                dir_json2 = {}
+                for file in listdir(path2):
+                    md5 = hash_file(join(path2, file), hash_name='md5')
+                    dir_json2[file] = md5
+            else:
+                with open(path2, 'r') as f:
+                    dir_json2 = { obj["relpath"]: obj["md5"] for obj in json.load(f) }
+        for relpath in sorted(set(dir_json1) | set(dir_json2)):
+            md5_1 = dir_json1.get(relpath)
+            md5_2 = dir_json2.get(relpath)
+            if md5_1 != md5_2:
+                print(f'{relpath}: {md5_1} -> {md5_2}')
     else:
-        res = process.run('diff', *diff_args, path1, path2, log=log, check=False)
-        exit(res.returncode)
+        diff_args = [
+            *(['-w'] if ignore_whitespace else []),
+            *(['-U', str(unified)] if unified is not None else []),
+            *(['--color=always'] if color else []),
+        ]
+        if cmds:
+            cmd, *sub_cmds = cmds
+            cmds1 = [ f'{cmd} {path1 or "/dev/null"}', *sub_cmds ]
+            cmds2 = [ f'{cmd} {path2 or "/dev/null"}', *sub_cmds ]
+            if not shell:
+                cmds1 = [ shlex.split(cmd) for cmd in cmds1 ]
+                cmds2 = [ shlex.split(cmd) for cmd in cmds2 ]
+
+            join_pipelines(
+                base_cmd=['diff', *diff_args],
+                cmds1=cmds1,
+                cmds2=cmds2,
+                verbose=verbose,
+                shell=shell,
+                shell_executable=shell_executable,
+            )
+        else:
+            res = process.run('diff', *diff_args, path1, path2, log=log, check=False)
+            exit(res.returncode)
 
 
 if __name__ == '__main__':
