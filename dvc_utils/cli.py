@@ -97,7 +97,8 @@ def dvc_utils_diff(
             shell_executable=shell_executable,
         )
     else:
-        process.run('diff', *diff_args, path1, path2, log=log)
+        res = process.run('diff', *diff_args, path1, path2, log=log, check=False)
+        exit(res.returncode)
 
 
 if __name__ == '__main__':
