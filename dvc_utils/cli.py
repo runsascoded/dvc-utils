@@ -72,8 +72,8 @@ def dvc_utils_diff(
         raise ValueError(f"Invalid refspec: {refspec}")
 
     log = err if verbose else False
-    path1 = dvc_cache_path(before, dvc_path, log=log)
-    path2 = path if after is None else dvc_cache_path(after, dvc_path, log=log)
+    path1 = dvc_cache_path(before, dvc_path, log=log) or '/dev/null'
+    path2 = (path if after is None else dvc_cache_path(after, dvc_path, log=log)) or '/dev/null'
 
     diff_args = [
         *(['-w'] if ignore_whitespace else []),

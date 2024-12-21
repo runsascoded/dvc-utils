@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import cache
 from os import environ as env, getcwd
 from os.path import join, relpath
@@ -35,19 +37,30 @@ def dvc_cache_dir(log: bool = False) -> str:
         return process.line('dvc', 'cache', 'dir', log=log)
 
 
-def dvc_md5(git_ref: str, dvc_path: str, log: bool = False) -> str:
+def dvc_md5(
+    git_ref: str,
+    dvc_path: str,
+    log: bool = False,
+) -> str | None:
     dir_path = get_dir_path()
     dir_path = '' if dir_path == '.' else f'{dir_path}/'
-    dvc_spec = process.output('git', 'show', f'{git_ref}:{dir_path}{dvc_path}', log=err if log else None)
+    dvc_spec = process.output('git', 'show', f'{git_ref}:{dir_path}{dvc_path}', log=err if log else None, err_ok=True)
+    if dvc_spec is None:
+        return None
     dvc_obj = yaml.safe_load(dvc_spec)
     out = singleton(dvc_obj['outs'], dedupe=False)
     md5 = out['md5']
     return md5
 
 
-def dvc_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) -> str:
+def dvc_path(
+    ref: str,
+    dvc_path: str | None = None,
+    log: bool = False,
+) -> str | None:
     if dvc_path and not dvc_path.endswith('.dvc'):
         dvc_path += '.dvc'
+
     if dvc_path:
         md5 = dvc_md5(ref, dvc_path, log=log)
     elif ':' in ref:
@@ -55,6 +68,10 @@ def dvc_path(ref: str, dvc_path: Optional[str] = None, log: bool = False) -> str
         md5 = dvc_md5(git_ref, dvc_path, log=log)
     else:
         md5 = ref
-    dirname = md5[:2]
-    basename = md5[2:]
-    return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
+
+    if md5 is None:
+        return None
+    else:
+        dirname = md5[:2]
+        basename = md5[2:]
+        return join(dvc_cache_dir(log=log), 'files', 'md5', dirname, basename)
