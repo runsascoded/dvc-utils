@@ -17,7 +17,8 @@ def cli():
 
 @cli.command('diff', short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first')
 @option('-c', '--color', is_flag=True, help='Colorize the output')
-@option('-r', '--refspec', default='HEAD', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
+@option('-r', '--refspec', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
+@option('-R', '--ref', help='Shorthand for `-r <ref>^..<ref>`, i.e. inspect a specific commit (vs. its parent)')
 @option('-s', '--shell-executable', help=f'Shell to use for executing commands; defaults to $SHELL ({env.get("SHELL")})')
 @option('-S', '--no-shell', is_flag=True, help="Don't pass `shell=True` to Python `subprocess`es")
 @option('-U', '--unified', type=int, help='Number of lines of context to show (passes through to `diff`)')
@@ -28,6 +29,7 @@ def cli():
 def dvc_utils_diff(
     color: bool,
     refspec: str | None,
+    ref: str | None,
     shell_executable: str | None,
     no_shell: bool,
     unified: int | None,
@@ -52,6 +54,13 @@ def dvc_utils_diff(
     cmds = list(exec_cmds) + cmds
 
     path, dvc_path = dvc_paths(path)
+
+    if refspec and ref:
+        raise ValueError("Specify -r/--refspec xor -R/--ref")
+    if ref:
+        refspec = f'{ref}^..{ref}'
+    elif not refspec:
+        refspec = 'HEAD'
 
     pcs = refspec.split('..', 1)
     if len(pcs) == 1:
