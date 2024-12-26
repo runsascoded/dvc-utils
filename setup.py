@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='dvc-utils',
@@ -6,7 +6,8 @@ setup(
     description="CLI for diffing DVC files at two commits (or one commit vs. current worktree), optionally passing both through another command first",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    packages=['dvc_utils'],
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=open("requirements.txt").read(),
     entry_points={
         'console_scripts': [
