@@ -1,14 +1,53 @@
-name: Release to PyPI
+name: Verify README examples, release to PyPI
 on:
   push:
-#    branches: [ "main" ]
+    branches: [ "main" ]
     tags: [ "v**" ]
-#  pull_request:
-#    branches:
-#      - "**"
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 jobs:
+  test:
+    name: Verify README examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: 'requirements*.txt'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install parquet2json
+      - name: Install dvc-utils
+        run: pip install -e . -r requirements-ci.txt
+      - name: '`dvc pull` test/data'
+        working-directory: test/data
+        run: dvc pull -r s3 -R -A
+      - name: Set up parquet-helpers
+        uses: actions/checkout@v4
+        with:
+          repository: ryan-williams/parquet-helpers
+          path: pqt
+      - name: Verify README examples
+        env:
+          # Evaluate README examples from within the `test/data` submodule
+          BMDF_WORKDIR: test/data
+        run: |
+          export PATH="$PWD/pqt:$PATH"
+          . pqt/.pqt-rc
+          export SHELL
+          mdcmd
+          git diff --exit-code
   release:
-    name: Release
+    name: Release to PyPI
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:

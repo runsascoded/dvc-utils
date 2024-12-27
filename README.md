@@ -55,25 +55,146 @@ dvc-diff --help
 #   optional) at HEAD (last committed value) vs. the current worktree content.
 #
 # Options:
-#   -c, --color                  Colorize the output
-#   -r, --refspec TEXT           <commit 1>..<commit 2> (compare two commits) or
-#                                <commit> (compare <commit> to the worktree)
-#   -s, --shell-executable TEXT  Shell to use for executing commands; defaults
-#                                to $SHELL (/bin/bash)
-#   -S, --no-shell               Don't pass `shell=True` to Python
-#                                `subprocess`es
-#   -U, --unified INTEGER        Number of lines of context to show (passes
-#                                through to `diff`)
-#   -v, --verbose                Log intermediate commands to stderr
-#   -w, --ignore-whitespace      Ignore whitespace differences (pass `-w` to
-#                                `diff`)
-#   -x, --exec-cmd TEXT          Command(s) to execute before diffing; alternate
-#                                syntax to passing commands as positional
-#                                arguments
-#   --help                       Show this message and exit.
+#   -c, --color / -C, --no-color  Force or prevent colorized output
+#   -r, --refspec TEXT            <commit 1>..<commit 2> (compare two commits)
+#                                 or <commit> (compare <commit> to the worktree)
+#   -R, --ref TEXT                Shorthand for `-r <ref>^..<ref>`, i.e. inspect
+#                                 a specific commit (vs. its parent)
+#   -s, --shell-executable TEXT   Shell to use for executing commands; defaults
+#                                 to $SHELL
+#   -S, --no-shell                Don't pass `shell=True` to Python
+#                                 `subprocess`es
+#   -U, --unified INTEGER         Number of lines of context to show (passes
+#                                 through to `diff`)
+#   -v, --verbose                 Log intermediate commands to stderr
+#   -w, --ignore-whitespace       Ignore whitespace differences (pass `-w` to
+#                                 `diff`)
+#   -x, --exec-cmd TEXT           Command(s) to execute before diffing;
+#                                 alternate syntax to passing commands as
+#                                 positional arguments
+#   --help                        Show this message and exit.
 ```
 
 ## Examples <a id="examples"></a>
+These examples are verified with [`mdcmd`] and `$BMDF_WORKDIR=test/data`
+
+([`test/data`] is a clone of [ryan-williams/dvc-helpers@test], which contains simple DVC-tracked files used for testing [`git-diff-dvc.sh`])
+
+[`8ec2060`] added a DVC-tracked text file, `test.txt`:
+
+<!-- `bmdf -- dvc-diff -R 8ec2060 test.txt` -->
+```bash
+dvc-diff -R 8ec2060 test.txt
+# 0a1,10
+# > 1
+# > 2
+# > 3
+# > 4
+# > 5
+# > 6
+# > 7
+# > 8
+# > 9
+# > 10
+```
+
+[`0455b50`] appended some lines to `test.txt`:
+
+<!-- `bmdf -- dvc-diff -R 0455b50 test.txt` -->
+```bash
+dvc-diff -R 0455b50 test.txt
+# 10a11,15
+# > 11
+# > 12
+# > 13
+# > 14
+# > 15
+```
+
+[`f92c1d2`] added `test.parquet`:
+
+<!-- `bmdf -- dvc-diff -R f92c1d2 pqa test.parquet` -->
+```bash
+dvc-diff -R f92c1d2 pqa test.parquet
+# 0a1,27
+# > MD5: 4379600b26647a50dfcd0daa824e8219
+# > 1635 bytes
+# > 5 rows
+# > message schema {
+# >   OPTIONAL INT64 num;
+# >   OPTIONAL BYTE_ARRAY str (STRING);
+# > }
+# > {
+# >   "num": 111,
+# >   "str": "aaa"
+# > }
+# > {
+# >   "num": 222,
+# >   "str": "bbb"
+# > }
+# > {
+# >   "num": 333,
+# >   "str": "ccc"
+# > }
+# > {
+# >   "num": 444,
+# >   "str": "ddd"
+# > }
+# > {
+# >   "num": 555,
+# >   "str": "eee"
+# > }
+```
+
+[`f29e52a`] updated `test.parquet`:
+
+<!-- `bmdf -- dvc-diff -R f29e52a pqa test.parquet` -->
+```bash
+dvc-diff -R f29e52a pqa test.parquet
+# 1,3c1,3
+# < MD5: 4379600b26647a50dfcd0daa824e8219
+# < 1635 bytes
+# < 5 rows
+# ---
+# > MD5: be082c87786f3364ca9efec061a3cc21
+# > 1622 bytes
+# > 8 rows
+# 5c5
+# <   OPTIONAL INT64 num;
+# ---
+# >   OPTIONAL INT32 num;
+# 26a27,38
+# > }
+# > {
+# >   "num": 666,
+# >   "str": "fff"
+# > }
+# > {
+# >   "num": 777,
+# >   "str": "ggg"
+# > }
+# > {
+# >   "num": 888,
+# >   "str": "hhh"
+```
+
+[`3257258`] added a DVC-tracked directory `data/`, including `test.{txt,parquet}`), and removed the top-level `test.{txt,parquet}`.
+
+<!-- `bmdf -- dvc-diff -R 3257258 data` -->
+```bash
+dvc-diff -R 3257258 data
+# test.parquet: None -> c07bba3fae2b64207aa92f422506e4a2
+# test.txt: None -> e20b902b49a98b1a05ed62804c757f94
+```
+
+[`ae8638a`] changed values in `data/test.parquet`, and added rows to `data/test.txt`:
+
+<!-- `bmdf -- dvc-diff -R ae8638a data` -->
+```bash
+dvc-diff -R ae8638a data
+# test.parquet: c07bba3fae2b64207aa92f422506e4a2 -> f46dd86f608b1dc00993056c9fc55e6e
+# test.txt: e20b902b49a98b1a05ed62804c757f94 -> 9306ec0709cc72558045559ada26573b
+```
 
 ### Parquet <a id="parquet-diff"></a>
 See sample commands and output below for inspecting changes to [a DVC-tracked Parquet file][commit path] in [a given commit][commit].
@@ -323,3 +444,15 @@ This helped me see that the data update in question (`c0..c1`) dropped some fiel
 [`kcr`]: https://github.com/ryan-williams/arg-helpers/blob/a8c60809f8878fa38b3c03614778fcf29132538e/.arg-rc#L118
 [`snc`]: https://github.com/ryan-williams/case-helpers/blob/c40a62a9656f0d52d68fb3a108ae6bb3eed3c7bd/.case-rc#L9
 [`sdf`]: https://github.com/ryan-williams/arg-helpers/blob/a8c60809f8878fa38b3c03614778fcf29132538e/.arg-rc#L138
+
+[`mdcmd`]: https://github.com/runsascoded/bash-markdown-fence?tab=readme-ov-file#bmdf
+[`test/data`]: test/data
+[ryan-williams/dvc-helpers@test]: https://github.com/ryan-williams/dvc-helpers/tree/test
+[`git-diff-dvc.sh`]: https://github.com/ryan-williams/dvc-helpers/blob/main/git-diff-dvc.sh
+
+[`8ec2060`]: https://github.com/ryan-williams/dvc-helpers/commit/8ec2060
+[`0455b50`]: https://github.com/ryan-williams/dvc-helpers/commit/0455b50
+[`f92c1d2`]: https://github.com/ryan-williams/dvc-helpers/commit/f92c1d2
+[`f29e52a`]: https://github.com/ryan-williams/dvc-helpers/commit/f29e52a
+[`3257258`]: https://github.com/ryan-williams/dvc-helpers/commit/3257258
+[`ae8638a`]: https://github.com/ryan-williams/dvc-helpers/commit/ae8638a

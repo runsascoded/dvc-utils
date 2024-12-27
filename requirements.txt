@@ -1,4 +1,4 @@
 click
 pyyaml
-qmdx
-utz>=0.11.5
+qmdx>=0.0.5
+utz>=0.13.0
