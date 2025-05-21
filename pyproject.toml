@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dvc-utils"
+version = "0.2.0"
+description = "CLI for diffing DVC-tracked files at two commits (or one commit vs. current worktree), optionally passing both through another command first"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Ryan Williams", email = "ryan@runsascoded.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "click",
+    "dffs>=0.0.5",
+    "pyyaml",
+    "utz>=0.20.0",
+]
+
+[project.optional-dependencies]
+ci = [
+    "bmdf==0.5.2",
+    "dvc-s3",
+]
+
+[project.urls]
+Homepage = "https://github.com/runsascoded/dvc-utils"
+"Author URL" = "https://github.com/ryan-williams"
+
+[project.scripts]
+dvc-utils = "dvc_utils.main:main"
+dvc-diff = "dvc_utils.diff:dvc_diff"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,4 +1,0 @@
-click
-dffs>=0.0.5
-pyyaml
-utz>=0.20.0
