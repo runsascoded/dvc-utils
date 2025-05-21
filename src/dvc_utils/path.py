@@ -49,8 +49,13 @@ def dvc_md5(
     dir_path = get_dir_path()
     dir_path = '' if dir_path == '.' else f'{dir_path}{sep}'
     dvc_path = f"{dir_path}{dvc_path}"
-    dvc_spec = process.output('git', 'show', f'{git_ref}:{dvc_path}', log=err if log else None, err_ok=True, stderr=DEVNULL)
-    if dvc_spec is None:
+    dvc_spec = process.output(
+        'git', 'show', f'{git_ref}:{dvc_path}',
+        err_ok=True,
+        log=err if log else None,
+        stderr=None if log else DEVNULL,
+    )
+    if not dvc_spec:
         cur_dir = dirname(dvc_path)
         relpath = basename(dvc_path)
         if relpath.endswith(".dvc"):

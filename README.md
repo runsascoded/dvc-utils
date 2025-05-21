@@ -21,25 +21,11 @@ pip install dvc-utils
 ```
 
 ## Usage <a id="usage"></a>
-<!-- `bmdf -- dvc-utils --help` -->
-```bash
-dvc-utils --help
-# Usage: dvc-utils [OPTIONS] COMMAND [ARGS]...
-#
-# Options:
-#   --help  Show this message and exit.
-#
-# Commands:
-#   diff  Diff a DVC-tracked file at two commits (or one commit vs. current
-#         worktree), optionally passing both through another command first
-```
+Currently one command is exposed, `dvc-diff`:
 
-The single subcommand, `dvc-utils diff`, is also exposed directly as `dvc-dff`:
-
-### `dvc-diff` <a id="dvc-diff"></a>
-<!-- `bmdf -- dvc-diff --help` -->
+<!-- `bmdf -- dvc-diff` -->
 ```bash
-dvc-diff --help
+dvc-diff
 # Usage: dvc-diff [OPTIONS] [exec_cmd...] <path>
 #
 #   Diff a file at two commits (or one commit vs. current worktree), optionally
@@ -76,9 +62,8 @@ dvc-diff --help
 ```
 
 ## Examples <a id="examples"></a>
-These examples are verified with [`mdcmd`] and `$BMDF_WORKDIR=test/data`
-
-([`test/data`] is a clone of [ryan-williams/dvc-helpers@test], which contains simple DVC-tracked files used for testing [`git-diff-dvc.sh`])
+- Examples below are verified with [`mdcmd`] and `$BMDF_WORKDIR=test/data` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)).
+- [test/data] is a clone of [ryan-williams/dvc-helpers@test], which contains simple DVC-tracked files (used in that repo for testing [`git-diff-dvc.sh`]).
 
 [`8ec2060`] added a DVC-tracked text file, `test.txt`:
 
@@ -148,9 +133,9 @@ dvc-diff -R f92c1d2 pqa test.parquet
 
 [`f29e52a`] updated `test.parquet`:
 
-<!-- `bmdf -- dvc-diff -R f29e52a pqa test.parquet` -->
+<!-- `bmdf -E PQT_TXT_OPTS=-n2 -- dvc-diff -R f29e52a pqa test.parquet` -->
 ```bash
-dvc-diff -R f29e52a pqa test.parquet
+PQT_TXT_OPTS=-n2 dvc-diff -R f29e52a pqa test.parquet
 # 1,3c1,3
 # < MD5: 4379600b26647a50dfcd0daa824e8219
 # < 1635 bytes
@@ -163,17 +148,16 @@ dvc-diff -R f29e52a pqa test.parquet
 # <   OPTIONAL INT64 num;
 # ---
 # >   OPTIONAL INT32 num;
-# 26a27,38
-# > }
-# > {
-# >   "num": 666,
-# >   "str": "fff"
-# > }
-# > {
+# 19,20c19,20
+# <   "num": 444,
+# <   "str": "ddd"
+# ---
 # >   "num": 777,
 # >   "str": "ggg"
-# > }
-# > {
+# 23,24c23,24
+# <   "num": 555,
+# <   "str": "eee"
+# ---
 # >   "num": 888,
 # >   "str": "hhh"
 ```
@@ -447,6 +431,7 @@ This helped me see that the data update in question (`c0..c1`) dropped some fiel
 
 [`mdcmd`]: https://github.com/runsascoded/bash-markdown-fence?tab=readme-ov-file#bmdf
 [`test/data`]: test/data
+[test/data]: test/data
 [ryan-williams/dvc-helpers@test]: https://github.com/ryan-williams/dvc-helpers/tree/test
 [`git-diff-dvc.sh`]: https://github.com/ryan-williams/dvc-helpers/blob/main/git-diff-dvc.sh
 

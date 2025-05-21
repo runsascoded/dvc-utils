@@ -1,4 +1,4 @@
 click
+dffs>=0.0.5
 pyyaml
-qmdx>=0.0.5
-utz>=0.13.0
+utz>=0.20.0
