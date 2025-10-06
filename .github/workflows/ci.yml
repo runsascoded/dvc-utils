@@ -27,7 +27,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo install parquet2json
       - name: Install dvc-utils
-        run: pip install -e .[ci]
+        run: pip install -e .[ci,test]
+      - name: Run pytest
+        run: pytest
       - name: '`dvc pull` test/data'
         working-directory: test/data
         run: dvc pull -r s3 -R -A
