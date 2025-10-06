@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "dvc-utils"
@@ -14,7 +14,7 @@ authors = [
 requires-python = ">=3.9"
 dependencies = [
     "click",
-    "dffs>=0.0.5",
+    "dffs>=0.0.6",
     "pyyaml",
     "utz>=0.20.0",
 ]
@@ -23,6 +23,9 @@ dependencies = [
 ci = [
     "bmdf==0.5.2",
     "dvc-s3",
+]
+test = [
+    "pytest>=7.0.0",
 ]
 
 [project.urls]
@@ -33,8 +36,10 @@ Homepage = "https://github.com/runsascoded/dvc-utils"
 dvc-utils = "dvc_utils.main:main"
 dvc-diff = "dvc_utils.diff:dvc_diff"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/dvc_utils"]

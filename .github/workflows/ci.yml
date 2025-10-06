@@ -18,19 +18,25 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: 'requirements*.txt'
+          enable-cache: true
+      - name: Set up Python 3.11
+        run: uv python install 3.11
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo install parquet2json
-      - name: Install dvc-utils
-        run: pip install -e .[ci]
+      - name: Install dependencies
+        run: uv sync --extra ci --extra test
+      - name: Run pytest
+        run: |
+          source .venv/bin/activate
+          pytest
       - name: '`dvc pull` test/data'
         working-directory: test/data
-        run: dvc pull -r s3 -R -A
+        run: |
+          source ../../.venv/bin/activate
+          dvc pull -r s3 -R -A
       - name: Set up parquet-helpers
         uses: actions/checkout@v4
         with:
@@ -41,6 +47,7 @@ jobs:
           # Evaluate README examples from within the `test/data` submodule
           BMDF_WORKDIR: test/data
         run: |
+          source .venv/bin/activate
           export PATH="$PWD/pqt:$PATH"
           . pqt/.pqt-rc
           export SHELL
@@ -53,18 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-      - name: Install release deps
-        run: pip install build twine wheel
-      - name: Install dvc-utils
-        run: pip install -e .
-      - name: Build release
-        run: python -m build
-      - name: Publish release
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload dist/*
+      - uses: astral-sh/setup-uv@v5
+      - name: Build and publish to PyPI
+        run: uv publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}

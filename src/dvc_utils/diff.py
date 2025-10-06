@@ -111,7 +111,7 @@ def dvc_diff(
                 cmds1 = [ shlex.split(cmd) for cmd in cmds1 ]
                 cmds2 = [ shlex.split(cmd) for cmd in cmds2 ]
 
-            join_pipelines(
+            returncode = join_pipelines(
                 base_cmd=['diff', *diff_args],
                 cmds1=cmds1,
                 cmds2=cmds2,
@@ -119,6 +119,7 @@ def dvc_diff(
                 shell=shell,
                 executable=shell_executable,
             )
+            exit(returncode)
         else:
             res = process.run('diff', *diff_args, path1 or '/dev/null', path2 or '/dev/null', log=log, check=False)
             exit(res.returncode)
