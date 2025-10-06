@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dvc-utils"
-version = "0.3.0"
+version = "0.3.1"
 description = "CLI for diffing DVC-tracked files at two commits (or one commit vs. current worktree), optionally passing both through another command first"
 readme = "README.md"
 license = {text = "MIT"}
