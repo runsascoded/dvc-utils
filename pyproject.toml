@@ -11,10 +11,10 @@ license = {text = "MIT"}
 authors = [
     {name = "Ryan Williams", email = "ryan@runsascoded.com"}
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "click",
-    "dffs>=0.0.6",
+    "dffs>=0.0.7",
     "pyyaml",
     "utz>=0.20.0",
 ]

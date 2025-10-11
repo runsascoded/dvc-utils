@@ -41,6 +41,10 @@ dvc-diff
 #   optional) at HEAD (last committed value) vs. the current worktree content.
 #
 # Options:
+#   -b, --both / -B, --no-both    Merge stderr into stdout in pipeline commands
+#                                 (like shell `2>&1`), so stderr is included in
+#                                 diff output. Default: stderr shown only on
+#                                 command failures.
 #   -c, --color / -C, --no-color  Force or prevent colorized output
 #   -r, --refspec TEXT            <commit 1>..<commit 2> (compare two commits)
 #                                 or <commit> (compare <commit> to the worktree)

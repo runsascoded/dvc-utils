@@ -18,6 +18,7 @@ from dvc_utils.path import dvc_paths, dvc_cache_path
     short_help='Diff a DVC-tracked file at two commits (or one commit vs. current worktree), optionally passing both through another command first',
     no_args_is_help=True,
 )
+@option('-b/-B', '--both/--no-both', default=False, help='Merge stderr into stdout in pipeline commands (like shell `2>&1`), so stderr is included in diff output. Default: stderr shown only on command failures.')
 @option('-c/-C', '--color/--no-color', default=None, help='Force or prevent colorized output')
 @option('-r', '--refspec', help='<commit 1>..<commit 2> (compare two commits) or <commit> (compare <commit> to the worktree)')
 @option('-R', '--ref', help='Shorthand for `-r <ref>^..<ref>`, i.e. inspect a specific commit (vs. its parent)')
@@ -29,6 +30,7 @@ from dvc_utils.path import dvc_paths, dvc_cache_path
 @option('-x', '--exec-cmd', 'exec_cmds', multiple=True, help='Command(s) to execute before diffing; alternate syntax to passing commands as positional arguments')
 @argument('args', metavar='[exec_cmd...] <path>', nargs=-1)
 def dvc_diff(
+    both: bool,
     color: bool | None,
     refspec: str | None,
     ref: str | None,
@@ -118,6 +120,7 @@ def dvc_diff(
                 verbose=verbose,
                 shell=shell,
                 executable=shell_executable,
+                both=both,
             )
             exit(returncode)
         else:

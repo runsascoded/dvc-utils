@@ -60,7 +60,8 @@ def dvc_md5(
         relpath = basename(dvc_path)
         if relpath.endswith(".dvc"):
             relpath = relpath[:-len(".dvc")]
-        while cur_dir and cur_dir != '.':
+        prev_dir = None
+        while cur_dir and cur_dir != '.' and cur_dir != prev_dir:
             dir_cache_path = dvc_cache_path(ref=git_ref, dvc_path=f"{cur_dir}.dvc", log=log)
             if dir_cache_path:
                 with open(dir_cache_path, 'r') as f:
@@ -71,6 +72,7 @@ def dvc_md5(
                 else:
                     raise RuntimeError(f"{relpath=} not found in DVC-tracked dir {cur_dir}")
             relpath = join(basename(cur_dir), relpath)
+            prev_dir = cur_dir
             cur_dir = dirname(cur_dir)
         return None
     dvc_obj = yaml.safe_load(dvc_spec)
