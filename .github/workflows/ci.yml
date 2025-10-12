@@ -28,7 +28,17 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo install parquet2json
+      - name: Install parquet2json
+        run: |
+          if ! command -v parquet2json &> /dev/null; then
+            # Use cargo-binstall for faster installation if available
+            if ! command -v cargo-binstall &> /dev/null; then
+              curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+            fi
+            cargo binstall -y parquet2json || cargo install parquet2json
+          else
+            echo "parquet2json already installed: $(parquet2json --version)"
+          fi
       - name: Install dependencies
         run: uv sync --extra ci --extra test
       - name: Run pytest
